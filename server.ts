@@ -73,11 +73,11 @@ app.get('/api/users/:id', async (req, res) => {
   
 
 // Update a record
-app.put('/api/users/:id', async (req, res) => {
+app.put('/api/formdata/:id', async (req, res) => {
   const id = req.params.id;
-  const { name, email } = req.body;
-  const query = 'UPDATE users SET name = $1, email = $2 WHERE id = $3';
-  const values = [name, email, id];
+  const { firstname, lastname, email, task_description, start_time, end_time,status  } = req.body;
+  const query = 'UPDATE tasks SET firstname = $1, lastname = $2 , email = $3, task_description = $4, start_time = $5, end_time = $6, status = $7  WHERE id = $8';
+  const values = [firstname, lastname, email, task_description, start_time, end_time, status , id];
 
   try {
     const result = await pool.query(query, values);
@@ -85,6 +85,24 @@ app.put('/api/users/:id', async (req, res) => {
       res.status(404).json({ error: 'User not found' });
     } else {
       res.json({ message: 'User updated successfully' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Delete a record
+app.delete('/api/formdata/:id', async (req, res) => {
+  const id = req.params.id;
+  const query = 'DELETE FROM tasks WHERE id = $1';
+  const values = [id];
+
+  try {
+    const result = await pool.query(query, values);
+    if (result.rowCount === 0) {
+      res.status(404).json({ error: 'User not found' });
+    } else {
+      res.json({ message: 'User deleted successfully' });
     }
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
