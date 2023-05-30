@@ -23,7 +23,7 @@ const pool = new Pool({
   });
  //get all the record
 app.get('/api/formdata', (req, res) => {
-  pool.query('SELECT * FROM tasks', (error, results) => {
+  pool.query('SELECT * FROM tasks order by id asc', (error, results) => {
     if (error) {
       console.error('Error executing query', error);
       res.status(500).json({ error: 'Internal server error' });
@@ -51,7 +51,7 @@ app.post('/api/formdata', async (req, res) => {
 
 
 // Get a single record by ID
-app.get('/api/users/:id', async (req, res) => {
+app.get('/api/formdata/:id', async (req, res) => {
   const id = req.params.id;
   const query = 'SELECT * FROM tasks WHERE id = $1';
   const values = [id];
@@ -130,7 +130,9 @@ app.delete('/api/formdata/:id', async (req, res) => {
       // Generate JWT token
       const token = jwt.sign({ userId }, 'your_secret_key');
   
-      res.json({ token });
+      res.status(201).json({message: 'User registered successfully', token });
+      //console.log(result);
+
     } catch (error) {
       console.error('Error during registration:', error);
       res.status(500).json({ error: 'Internal server error' });
@@ -145,6 +147,12 @@ app.delete('/api/formdata/:id', async (req, res) => {
       const query = 'SELECT * FROM users WHERE username = $1';
       const result = await pool.query(query, [username]);
       const user = result.rows[0];
+
+      //verify user
+      if (!user) {
+        res.status(401).json({ error: 'Invalid credentials' });
+        return;
+      }
   
       // Verify password
       const passwordMatch = await bcrypt.compare(password, user.password);
@@ -157,7 +165,8 @@ app.delete('/api/formdata/:id', async (req, res) => {
       // Generate JWT token
       const token = jwt.sign({ userId: user.id }, 'your_secret_key');
   
-      res.json({ token });
+      res.status(200).json({message: 'Login successful' ,token });
+
     } catch (error) {
       console.error('Error during login:', error);
       res.status(500).json({ error: 'Internal server error' });
