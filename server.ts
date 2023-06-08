@@ -107,10 +107,14 @@ app.delete('/api/formdata/:id', async (req, res) => {
 });
 
 //-----------------------------------------------------------------------------------------------
-
   app.post('/register', async (req, res) => {
+
     try {
       const { username, email, password } = req.body;
+      const userExists = await checkUserExists(username);
+      if (userExists) {
+        return res.status(409).json({ error: 'User already exists' });
+      }
   
       // Hash the password
       const saltRounds = 10;
@@ -142,6 +146,13 @@ app.delete('/api/formdata/:id', async (req, res) => {
   app.post('/login', async (req, res) => {
     try {
       const { username, password } = req.body;
+      
+      
+      // Check if the user exists
+      const userExists = await checkUserExists(username);
+      if (!userExists) {
+        return res.status(404).json({ error: 'User not found' });
+      }
   
       // Retrieve user from the database
       const query = 'SELECT * FROM users WHERE username = $1';
@@ -165,7 +176,7 @@ app.delete('/api/formdata/:id', async (req, res) => {
       // Generate JWT token
       const token = jwt.sign({ userId: user.id }, 'your_secret_key');
   
-      res.status(200).json({message: 'Login successful' ,token });
+      res.status(200).json({message: 'Login successful' ,token,user});
 
     } catch (error) {
       console.error('Error during login:', error);
@@ -178,3 +189,17 @@ app.delete('/api/formdata/:id', async (req, res) => {
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
+
+
+async function checkUserExists(username) {
+  const query = 'SELECT EXISTS(SELECT 1 FROM users WHERE username = $1)';
+  const result = await pool.query(query, [username]);
+  return result.rows[0].exists;
+}
+
+// Function to check if the password is correct
+async function checkPassword(username, password) {
+  const query = 'SELECT password FROM users WHERE username = $1';
+  const result = await pool.query(query, [username]);
+  return result.rows[0].password === password;
+}
